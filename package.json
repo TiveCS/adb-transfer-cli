@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "transfer": "bun run transfer.ts"
+    "start": "bun run index.ts",
+    "transfer": "bun run index.ts"
   },
   "dependencies": {
     "@clack/prompts": "^0.8.2",

@@ -1,14 +1,16 @@
-# Manga Transfer CLI
+# ADB Transfer CLI
 
-A command-line tool for transferring manga folders from your local machine to an Android device via ADB (Android Debug Bridge).
+A bidirectional command-line tool for transferring files and folders between your PC and Android device via ADB (Android Debug Bridge).
 
 ## Features
 
-- Interactive folder selection with `@clack/prompts`
-- "Select All" option for bulk transfers
-- Real-time progress indicators
-- Transfer statistics (size, time, speed)
-- Error handling and graceful failures
+- **Bidirectional transfer**: PC → Phone and Phone → PC
+- **Multi-path support**: Register and save frequently used paths
+- **Manual path input**: Enter custom paths on-the-fly
+- **Interactive selection**: Browse and select files/folders with `@clack/prompts`
+- **Nested browsing**: Choose to copy entire directories or select files inside
+- **Real-time progress**: Transfer statistics (size, time, speed)
+- **Auto-save paths**: Automatically save manually entered paths for future use
 
 ## Prerequisites
 
@@ -96,37 +98,37 @@ cd adb-transfer-cli
 bun install
 ```
 
-3. Configure environment variables:
-```bash
-# Edit .env file
-nano .env
+3. (Optional) Pre-configure paths in `app.config.json`:
+```json
+{
+  "pcPaths": [
+    "/home/user/Documents/Files",
+    "/home/user/Downloads"
+  ],
+  "phonePaths": [
+    "/sdcard/Download",
+    "/sdcard/DCIM"
+  ]
+}
 ```
 
-Update with your paths:
-```env
-SOURCE_FOLDER=/absolute/path/to/your/manga/folders
-TARGET_FOLDER=/sdcard/Manga
-```
-
-**Note**:
-- `SOURCE_FOLDER`: The directory containing your manga folders on your computer
-- `TARGET_FOLDER`: The destination directory on your Android device (common paths: `/sdcard/`, `/storage/emulated/0/`, `/storage/sdcard0/`)
+**Note**: You can also add paths during runtime via manual input, which will be automatically saved to the config file.
 
 ## Usage
 
 ### Run the tool:
 
 ```bash
-./transfer.ts
+./index.ts
 ```
 
 Or:
 
 ```bash
-bun transfer.ts
+bun start
 ```
 
-Or use the npm script:
+Or:
 
 ```bash
 bun run transfer
@@ -134,21 +136,46 @@ bun run transfer
 
 ### Interactive Flow:
 
-1. The tool will scan your `SOURCE_FOLDER` for directories
-2. You'll see an interactive selection menu:
+1. **Select transfer direction**:
    ```
-   ◆ Select folders to transfer:
-   │  ○ Select All
-   │  ○ One Piece
-   │  ○ Naruto
-   │  ○ Bleach
+   ◆ Select transfer direction:
+   │  ○ Copy from PC to Phone
+   │  ○ Copy from Phone to PC
    └
    ```
-3. Use arrow keys to navigate, space to select, enter to confirm
-4. Selected folders will be transferred sequentially with progress indicators
-5. After completion, you'll see statistics for each transfer:
+
+2. **Select source path** (from registered paths or manual input):
    ```
-   ✓ One Piece - 245.67 MB - 12.3s - 19.97 MB/s
+   ◆ Select PC path:
+   │  ○ /home/user/Documents
+   │  ○ /home/user/Downloads
+   │  ○ + Enter path manually
+   └
+   ```
+
+3. **Select files/folders** from source:
+   ```
+   ◆ Select items to transfer:
+   │  ☑ 📁 Photos
+   │  ☑ 📄 document.pdf
+   │  ☐ 📁 Videos
+   └
+   ```
+
+4. **For directories**: Choose to copy whole or browse inside:
+   ```
+   ◆ "Photos" is a directory. What would you like to do?
+   │  ○ Copy entire directory
+   │  ○ Select files inside
+   └
+   ```
+
+5. **Select destination path** (from registered paths or manual input)
+
+6. **Transfer with progress**:
+   ```
+   ⠋ Transferring: Photos
+   ✓ Photos - 245.67 MB - 12.3s - 19.97 MB/s
    ```
 
 ## Troubleshooting
@@ -184,18 +211,24 @@ adb shell mkdir -p /sdcard/Manga
 - Avoid USB hubs
 - Enable "USB Tethering" on some devices for faster transfers
 
-### "No folders found" Error
-- Verify `SOURCE_FOLDER` path in `.env` is correct and absolute
-- Ensure the folder contains subdirectories (not just files)
+### "No items found" Error
+- Verify the path exists and is accessible
+- Check permissions for PC folders
+- For phone paths, ensure the device is connected and authorized
 
 ## Project Structure
 
 ```
 adb-transfer-cli/
-├── .env                # Environment configuration
+├── app.config.json     # Path configuration
+├── index.ts            # Main entry point
 ├── package.json        # Project dependencies
-├── transfer.ts         # Main transfer script
-└── README.md          # This file
+├── src/
+│   ├── config.ts       # Config management
+│   ├── transfer.ts     # Transfer logic
+│   ├── ui.ts           # Interactive UI
+│   └── utils.ts        # Helper functions
+└── README.md           # This file
 ```
 
 ## Technical Details
@@ -203,8 +236,9 @@ adb-transfer-cli/
 - **Runtime**: Bun
 - **Language**: TypeScript
 - **UI Library**: @clack/prompts
-- **Transfer Method**: ADB push command
-- **Transfer Mode**: Sequential (one folder at a time)
+- **Transfer Method**: ADB push/pull commands
+- **Transfer Mode**: Sequential (one item at a time)
+- **Direction**: Bidirectional (PC ↔ Phone)
 
 ## License
 
